@@ -3,4 +3,5 @@ This repo contains the code, models, and images to train and validate these mode
 
 ## Contributors
 [Javier Sotres](https://www.jsotres.com/)
+
 [Juan F. Gonzalez-Martinez](https://github.com/juanfran2018)
