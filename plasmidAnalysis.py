@@ -56,7 +56,7 @@ class YoloAnalysis():
         # setup Yolov3 network
         # assumes that weight and configuration files are in the
         # same folder
-        self.YOLO3Net = cv2.dnn.readNet("yolov3_training_5000.weights", "yolov3_testing.cfg")
+        self.YOLO3Net = cv2.dnn.readNet("yolov3.weights", "yolov3_testing.cfg")
         layer_names = self.YOLO3Net.getLayerNames()
         self.output_layers = [layer_names[i[0] - 1] for i in self.YOLO3Net.getUnconnectedOutLayers()]
         #setup embedding network for molecule identification

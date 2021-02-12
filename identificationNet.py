@@ -27,7 +27,7 @@ def get_embeddingNetwork(input_shape=(96,96,3), embedding_size=4096):
 
     embeddingNetwork = Model(inputs, outputs)
 
-    embeddingNetwork.load_weights('Test_Model_6_triple_loss_weights.h5')
+    embeddingNetwork.load_weights('siamese_embedding_network_weights.h5')
 
     return(embeddingNetwork)
 
