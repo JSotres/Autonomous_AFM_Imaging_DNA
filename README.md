@@ -10,6 +10,7 @@ A more comprehensive guide for the repo will be provided upon publication of the
 * Set scanning parameters in scanParameters.json
 * Open Nanoscope and command line as administrator.
 * From the command line, just go to the folder where the python scripts are and run:
+
     python runAFM.py -i scanParameters.json
 
 ## Contributors
