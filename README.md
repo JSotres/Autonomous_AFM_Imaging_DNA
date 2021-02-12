@@ -1,4 +1,4 @@
-# Repo for the manuscript: Autonomous AFM imaging of single DNA molecules enabled by deep learning
+# Repo for the manuscript: Enabling automated AFM imaging of single molecules with deep learning
 This repo contains the code, models, and images to train and validate these models, used in the manuscript "Enabling automated AFM imaging of single molecules with deep learning".
 
 A more comprehensive guide for the repo will be provided upon publication of the manuscript.
