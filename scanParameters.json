@@ -1,5 +1,5 @@
 {
-    "NanoScriptCode": "{E785FA24-E10E-49F5-9C11-063156A0A865}",
+    "NanoScriptCode": "Insert you code for Bruker Nanoscript here. Specific for each AFM. Contact Bruker",
     "scanLines": 480,
     "samplesPerLine": 480,
     "scanSize": 5,
@@ -7,6 +7,6 @@
     "xOffset": 0,
     "yOffset": 0,
     "setPoint": 0.03,
-    "captureDir": "E:\\NanoscopeData\\Javier\\120221",
+    "captureDir": "Path to the captuer folder",
     "captureFile": "dnaTEST.0_00000.spm"
 }
