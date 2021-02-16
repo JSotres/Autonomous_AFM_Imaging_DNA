@@ -1,5 +1,5 @@
 {
-    "NanoScriptCode": "Your NanoScript code here. You would need to contact Bruker if you one",
+    "NanoScriptCode": "Your NanoScript code here. You would need to contact Bruker if you do not have one",
     "scanLines": 480,
     "samplesPerLine": 480,
     "maxScanSize": 5,
