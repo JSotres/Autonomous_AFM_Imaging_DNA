@@ -33,29 +33,10 @@ if __name__ == "__main__":
     # for controlling the AFM 
     xlApp = win32com.client.Dispatch(inputData["NanoScriptCode"])
 
-    # We set in the AFM control software the scanning parameters,
-    # which were read from the json file where this parameters were
-    # provided and are at this stage in the dictionary inputData
-    #
-    # Number of lines
-    setattr(xlApp,"ScanLines",inputData["scanLines"])
-    # Number of columns
-    setattr(xlApp,"SamplesPerLine",inputData["samplesPerLine"])
-    # Lateral size (in microns)
-    setattr(xlApp,"ScanSize",inputData["scanSize"])
     
-    # Spatial coordinates for thpoint where engaging will be performed 
-    setattr(xlApp,"XOffset",inputData["xOffset"])
-    setattr(xlApp,"YOffset",inputData["yOffset"])
-    # Folder where AFM images will be saved
-    print(inputData["captureDir"])
-    setattr(xlApp,"CaptureDir",inputData["captureDir"])
-    # Name for the first image to be saved
-    setattr(xlApp,"CaptureFileName",inputData["captureFile"])
-
-    # We now create folders used to save and access images
-    # used for the autonomous imaging algorithm. The name for these
-    # folders are also provided in the json file containing input parameters
+    # We create folders used to save and access images used for the
+    # autonomous imaging algorithm. The name for these folders are
+    # also provided in the json file containing input parameters
     try:
         os.mkdir(os.path.join(inputData["captureDir"],"All_Images"))
         os.mkdir(os.path.join(inputData["captureDir"],"Zoomed_Molecules"))
@@ -75,23 +56,54 @@ if __name__ == "__main__":
     area = 0
     flag = 0
 
+    # We specifically store in one variable the maximum lateral size
+    # of areas to be scanned, as this will be often used by the algortihm
+    # to control the AFM
+    maxScanSize = inputData["maxScanSize"]
+
+    
+    # We set in the AFM control software the scanning parameters,
+    # which were read from the json file where this parameters were
+    # provided and are at this stage in the dictionary inputData
+    #
+    # Number of lines
+    setattr(xlApp,"ScanLines",inputData["scanLines"])
+    # Number of columns
+    setattr(xlApp,"SamplesPerLine",inputData["samplesPerLine"])
+    # Lateral size (in microns)
+    setattr(xlApp,"ScanSize",inputData["maxScanSize"])
+    # Set point (deflection, amplitude, etc, depending on the operation mode)
+    setattr(xlApp,"SetPoint_NV",inputData["setPoint"])
+    # Scan Rate (in Hz)
+    setattr(xlApp,"ScanRate",inputData["scanRate"])
+    # Spatial coordinates for thpoint where engaging will be performed 
+    setattr(xlApp,"XOffset",inputData["xOffset"])
+    setattr(xlApp,"YOffset",inputData["yOffset"])
+    # Folder where AFM images will be saved
+    setattr(xlApp,"CaptureDir",inputData["captureDir"])
+    # Name for the first image to be saved
+    setattr(xlApp,"CaptureFileName",inputData["captureFile"])
+
     # Command for engaging the AFM
     xlApp.Engage()
 
-    # Set point (deflection, amplitude, etc, depending on the operation mode)
-    setattr(xlApp,"SetPoint_NV",inputData["setPoint"])
 
-    # Scan Rate (in Hz)
-    setattr(xlApp,"ScanRate",inputData["scanRate"])
-    
-    while area < 25:
+    # We run the experiment until it is finished
+    experimentFinished = 0    
+    while experimentFinished == 0:
         xlApp.ScanSkipToLine(40,1)
         capturefile1 = getattr(xlApp,"CaptureFileName")
         image = os.path.join(inputData["captureDir"],capturefile1)
         xlApp.Capture()
         sto = getattr(xlApp,"IsCapturedone")
         if sto == 1:
-            result = plasmidAnalysis.plasmidAnalysis(image, flag, area)
+            result = plasmidAnalysis.plasmidAnalysis(
+                image,
+                flag,
+                area,
+                maxScanSize,
+                experimentFinished
+            )
             xoffset = result[0]
             yoffset = result[1]
             scansize = result[2]
@@ -101,8 +113,7 @@ if __name__ == "__main__":
             setattr(xlApp,"XOffset",xoffset)
             setattr(xlApp,"YOffset",yoffset)
 
-
-
        
+    # Withdraw when the experiment is finished
     xlApp.Withdraw()
     print("Experiment finished")

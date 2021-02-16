@@ -26,15 +26,25 @@ def get_embeddingNetwork(input_shape=(96,96,3), embedding_size=4096):
     outputs = Lambda(lambda x: K.l2_normalize(x,axis=-1)) (x)
 
     embeddingNetwork = Model(inputs, outputs)
-
-    embeddingNetwork.load_weights('siamese_embedding_network_weights.h5')
-
+    
     return(embeddingNetwork)
 
 def compute_dist(a,b):
     return np.sum(np.square(a-b))
 
+def prepareSavedImageForSiameseEmbedding(image, RESIZE):
+    img = cv2.imread(image)
+    img = cv2.resize(img, (RESIZE, RESIZE))
+    img = (img - img.mean(axis=(0,1)))/img[0].std(axis=(0,1))
+    img = img.reshape(-1, RESIZE, RESIZE, 3)
+    return img
 
+def prepareNumpyImageForSiameseEmbedding(image, RESIZE):
+    img = (image - image.mean(axis=(0,1)))/image.std(axis=(0,1))
+    img = img.reshape(-1, RESIZE, RESIZE, 3)
+    return img
+
+"""
 def detectSimilarity(embeddingNetwork, image1, image2):
     RESIZE = 96
     #input_shape=(96,96,3)
@@ -75,3 +85,5 @@ if __name__ == "__main__":
     filename2 = '0_00029.jpeg'
     filename3 = '0_00029.jpeg'
     detectSimilarity(filename3, filename2)
+
+"""

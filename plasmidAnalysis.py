@@ -5,6 +5,7 @@ import math
 import numpy as np
 import os
 import logging
+import time
 
 
 class YoloAnalysis():
@@ -61,6 +62,7 @@ class YoloAnalysis():
         self.output_layers = [layer_names[i[0] - 1] for i in self.YOLO3Net.getUnconnectedOutLayers()]
         #setup embedding network for molecule identification
         self.siamese_net_embedding = get_embeddingNetwork()
+        self.siamese_net_embedding.load_weights('Test_Model_6_triple_loss_weights.h5')
         # Shuts down logs from tensorflow
         os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'  # FATAL
         logging.getLogger('tensorflow').setLevel(logging.FATAL)
@@ -186,7 +188,7 @@ class YoloAnalysis():
             # if we were zooming on a molecule, we zoom out
             self.indexNextMolecule = None
             if self.flag == 0:
-                # Starting from a 5 um image, check that we
+                # Starting from a maximum scan area image, check that we
                 # zoom on a molecule not imaged before            
                 self.indexNextMolecule = self.checkNegativeSimilarity()
             elif self.flag == 1:
@@ -214,7 +216,7 @@ class YoloAnalysis():
             # Only one box found
             xc, yc, wc, hc = self.boxes
             boxes_relative_positions = np.squeeze(self.boxes_relative_positions)
-            color = (255,0,0)
+            color = (255,0,0) # blue
             cv2.rectangle(overlay, (xc, yc), (xc + wc, yc + hc), color, -1)
             cv2.rectangle(borderimage, (xc, yc), (xc + wc, yc + hc), (248,248,248), 1)
         elif self.distances.size > 1:
@@ -267,15 +269,16 @@ class YoloAnalysis():
         # Molecule_Being_Followed folder
         for file in dirs:
             comparisonFile = os.path.join(d,file)
+
+        i1 = prepareSavedImageForSiameseEmbedding(comparisonFile,96)
+        pred_i1 = self.siamese_net_embedding.predict(i1)
          
         # Checks if the Siamese Net identifies the molecule within
-        # the latest image and, in that, case, retruns the corresponding index
+        # the latest image and, in that, case, returns the corresponding index
         for i in range(self.boxes_relative_positions.shape[0]):
-            prediction = detectSimilarity(
-                self.siamese_net_embedding,
-                comparisonFile,
-                self.cutMolecule(i)
-            )
+            i2 = prepareNumpyImageForSiameseEmbedding(self.cutMolecule(i),96)
+            pred_i2 = self.siamese_net_embedding.predict(i2)
+            prediction = compute_dist(pred_i1,pred_i2)
             if prediction < 0.25:
                 indexNextMolecule = i
                 log_string = 'Same molecule as in previous scan was found'
@@ -288,15 +291,15 @@ class YoloAnalysis():
         d = self.savingDir+'\Initial_Zoomed_Molecules'
         dirs = os.listdir(d)
         indexNextMolecule = None
-        
+
         for i in range(self.boxes_relative_positions.shape[0]):
             prediction = 1
+            i2 = prepareNumpyImageForSiameseEmbedding(self.cutMolecule(i),96)
+            pred_i2 = self.siamese_net_embedding.predict(i2)
             for file in dirs:
-                prediction_new = detectSimilarity(
-                    self.siamese_net_embedding,
-                    os.path.join(d,file),
-                    self.cutMolecule(i)
-                )
+                i1 = prepareSavedImageForSiameseEmbedding(os.path.join(d,file),96)
+                pred_i1 = self.siamese_net_embedding.predict(i1)
+                prediction_new = compute_dist(pred_i1,pred_i2)
                 prediction = min(prediction, prediction_new)
             if prediction > 0.25:
                 indexNextMolecule = i
@@ -305,34 +308,36 @@ class YoloAnalysis():
                 return indexNextMolecule
         return indexNextMolecule
 
-    def moveToDifferentArea(self, area=0):
+    def moveToDifferentArea(self, area=0, maxScanSize=5):
         if int(area) < 20:
             self.xYolo, self.yYolo, self.newScanSize = np.array([
                     self.areas[int(area)+1][0],
                     self.areas[int(area)+1][1],
-                    5
+                    maxScanSize
             ])
             log_string = 'Moving to a Different Area ({}).'.format(int(area)+1)
             self.toLogFile(log_string)
         else:
-           log_string = 'Sample completely scanned'
-           self.toLogFile(log_string)
-           area = 25
+            log_string = 'Sample completely scanned'
+            self.toLogFile(log_string)
 
-    def ZoomOut(self):
+    def ZoomOut(self, maxScanSize=5):
         log_string = 'The molecule we were zooming in was not found. Zooming out.'
         self.toLogFile(log_string)
         
-        # Reads the latest imaged saved in the folder Molecule_Being_Followed
+        # Reads the latest imaged saved in the folder "Molecule_Being_Followed"
         d = self.savingDir+'\Molecule_Being_Followed'
         dirs = os.listdir(d)
         for file in dirs:
             finalMoleculeImage = os.path.join(d,file)
         image = cv2.imread(finalMoleculeImage)
 
-        # Writes this image in the folder Zoomed_Molecules
+        # Writes this image in the folders "Zoomed_Molecules" and "Initial_Zoomed_Molecules"
         fullPath = self.savingDir+'\Zoomed_Molecules\\'+'{}'
         cv2.imwrite(fullPath.format(file), image)
+        fullPath = self.savingDir+'\Initial_Zoomed_Molecules\\'+'{}'
+        cv2.imwrite(fullPath.format(file), image)
+        
         
         # Clean the folder Molecule_Being_Followed
         for file in dirs:
@@ -342,10 +347,10 @@ class YoloAnalysis():
         self.xYolo, self.yYolo, self.newScanSize = np.array([
                 self.imageObject.headerParameters['X Offset'][0]/1000.,
                 self.imageObject.headerParameters['Y Offset'][0]/1000.,
-                5
+                maxScanSize
         ])
 
-        # Sets flag to zero i.e., a new 5 um scan should start
+        # Sets flag to zero i.e., a new scan with max scan size should start
         self.flag = 0
             
 
@@ -376,7 +381,7 @@ class YoloAnalysis():
     
 
 
-def plasmidAnalysis(image, flag=0, area=0):
+def plasmidAnalysis(image, flag=0, area=0, maxScanSize=5, experimentFinished=0):
     # Finds lists of coordinates (x,y), widths and heights and distances
     # from the image center for the plasmid molecules contained in the
     # image
@@ -396,12 +401,12 @@ def plasmidAnalysis(image, flag=0, area=0):
     yoloOutput.saveYoloImageColor()
 
     if yoloOutput.flag == 0:
-        # A scan of 5x5 um has just been performed and no suitable
+        # A scan of maximum area value has just been performed and no suitable
         # molecule to be followed was found.
         # In this case we move to a different area
-        log_string = 'A 5um scan was performed and no suitable molecules were found.'
+        log_string = f'A {maxScanSize}um scan was performed and no suitable molecules were found.'
         yoloOutput.toLogFile(log_string)
-        yoloOutput.moveToDifferentArea(area)
+        yoloOutput.moveToDifferentArea(area, maxScanSize)
         area+= 1
         
 
@@ -415,27 +420,31 @@ def plasmidAnalysis(image, flag=0, area=0):
         # If it is not the case, it means that we found the molecule, but we need
         # to check them if we zoomed enough
         if yoloOutput.indexNextMolecule is None:
-            yoloOutput.ZoomOut()
+            yoloOutput.ZoomOut(maxScanSize)
         else:
             yoloOutput.checkEnoughZoom()
 
         # If it results that we zoomed enough (flag value changed to 3),
         # we first clean the Molecule_Being_Followed folder, and set
-        # the new scan size to 5um
+        # the new scan size to the maximum value
         if yoloOutput.flag == 2:
             d = yoloOutput.savingDir+'\Molecule_Being_Followed'
-            #d = 'e:\PythonData\Javier\Molecule_Being_Followed'
             dirs = os.listdir(d)
             for f in dirs:
                 os.remove(os.path.join(d,f))
-            yoloOutput.newScanSize = 5
+            yoloOutput.newScanSize = maxScanSize
             # and finally set the flag to 0
             yoloOutput.flag = 0
         
 
-    if math.fabs(yoloOutput.xYolo) > 25. or math.fabs(yoloOutput.yYolo) > 25. :
-        area = 25
-    returnArray = np.array([yoloOutput.xYolo, yoloOutput.yYolo, yoloOutput.newScanSize, yoloOutput.flag, area])
+    if math.fabs(yoloOutput.xYolo) > 25. or math.fabs(yoloOutput.yYolo) > 25. or area == 20:
+        experimentFinished = 1
+    returnArray = np.array([yoloOutput.xYolo,
+                            yoloOutput.yYolo,
+                            yoloOutput.newScanSize,
+                            yoloOutput.flag,
+                            area,
+                            experimentFinished])
     log_string = 'Leaving plasmidAnalysis function. xYolo: {}, yYolo: {}, newScanSize: {}, flag: {}, area: {}'.format(
         yoloOutput.xYolo,
         yoloOutput.yYolo,

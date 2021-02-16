@@ -52,7 +52,6 @@ class NanoscopeImage():
         closeDataBaseConnection()
         createTables()
         populateTables()
-        testFunction()
     '''
 
     def __init__(self, file_name):
@@ -240,72 +239,4 @@ class NanoscopeImage():
 
         self.Image[idx]['Processed Image Data'] = s
 
-    def test1(self):
-    	fig, ax = plt.subplots()
-    	ax.cla()
-    	plt.imshow(self.Image[0]['Processed Image Data'], cmap='gray')
-    	#plt.colorbar()
-    	plt.show()
-    	#plt.waitforbuttonpress()
-
-    def test4(self):
-    	fig = plt.figure(frameon=False)
-    	fig.set_size_inches(4,4)
-    	ax = plt.Axes(fig, [0., 0., 1., 1.])
-    	ax.set_axis_off()
-    	fig.add_axes(ax)
-    	ax.imshow(self.Image[0]['Processed Image Data'], cmap='gray', aspect='auto')
-    	#plt.colorbar()
-    	plt.show()
-
-    def test3(self):
-    	l = np.percentile(self.Image[0]['Processed Image Data'],99)
-    	print(l)
-
-    def test5(self):
-        print(type(self.headerParameters['@2:AFMSetDeflection'][0]))
-        a = self.getChannel('Friction','Retrace')
-        fig = plt.figure(frameon=False)
-        fig.set_size_inches(4,4)
-        ax = plt.Axes(fig, [0., 0., 1., 1.])
-        ax.set_axis_off()
-        fig.add_axes(ax)
-        b=a['Processed Image Data'].copy()
-        b[16,:]=np.max(a['Processed Image Data'])
-        ax.imshow(a['Processed Image Data'], cmap='gray', aspect='auto')
-        ax.axhline(y=16,color='red')
-        plt.show()
-        idx = self.getChannelIndex('Height','Retrace')
-        print(idx)
-
-    	
-
-    	
-	    
-
-
-###############################################################################
-# Run if this is the main program
-###############################################################################
-if __name__ == "__main__":
-    # Load parsed input force volume file and output database
-    ap = argparse.ArgumentParser()
-    ap.add_argument("-i", "--input", required=True,
-                    help="path to the Nanoscope file")
-    args = vars(ap.parse_args())
-
-    # Create an object of the NanoscopeForceVolumeFileToDataBase class
-    imageObject = NanoscopeImage(args['input'])
-
-    # Reads the header of file_name, and populates
-    # the headerParameters dictionary
-    imageObject.readHeader()
-    imageObject.readImages()
-    #imageObject.flattenImage(0)
-    #imageObject.equalizeTopImage(0,99)
-    #imageObject.test2()
     
-    #imageObject.test1()
-    #imageObject.test3()
-    #print(imageObject.headerParameters)
-    imageObject.test5()
