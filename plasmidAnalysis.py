@@ -6,6 +6,7 @@ import numpy as np
 import os
 import logging
 import time
+from tensorflow import keras
 
 
 class YoloAnalysis():
@@ -309,7 +310,7 @@ class YoloAnalysis():
         return indexNextMolecule
 
     def moveToDifferentArea(self, area=0, maxScanSize=5):
-        if int(area) < 20:
+        if int(area) < 19:
             self.xYolo, self.yYolo, self.newScanSize = np.array([
                     self.areas[int(area)+1][0],
                     self.areas[int(area)+1][1],
@@ -453,6 +454,9 @@ def plasmidAnalysis(image, flag=0, area=0, maxScanSize=5, experimentFinished=0):
         area)
     yoloOutput.toLogFile(log_string)
     yoloOutput.toLogFile('')
+
+    keras.backend.clear_session()
+    # del yoloOutput
 
     return returnArray
     
