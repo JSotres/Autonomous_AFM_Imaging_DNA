@@ -1,7 +1,7 @@
 # Repo for the manuscript: Enabling Autonomous Scanning Probe Microscopy Imaging of Single Molecules with Deep Learning
-This repo contains the code, models, and images to train and validate these models, used in the manuscript "Enabling Autonomous Scanning Probe Microscopy Imaging of Single Molecules with Deep Learning".
+This repo contains the code, models, and images to train and validate these models, used in the manuscript:
 
-A more comprehensive guide for the repo will be provided upon publication of the manuscript.
+Sotres J., Boyd H., Gonzalez-Martinez J.F. 2021. Enabling Autonomous Scanning Probe Microscopy Imaging of Single Molecules with Deep Learning. https://doi.org/10.1039/D1NR01109J. Nanoscale 13: 9193.
 
 ## Getting started
 * Tested with Python 3.6.0.
@@ -14,6 +14,6 @@ A more comprehensive guide for the repo will be provided upon publication of the
     `python runAFM.py -i scanParameters.json`
 
 ## Contributors
-[Javier Sotres](https://www.jsotres.com/)
+[Javier Sotres](https://github.com/JSotres)
 
 [Juan F. Gonzalez-Martinez](https://github.com/juanfran2018)
